@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html style="font-size: 14px;" lang="ua"><head>
+
+    <title>Розумний будинок</title>
+    <link href="{{ url_for('static', filename='app.css') }}" rel="stylesheet">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>window.jQuery || document.write('<script src="{{
+    url_for('static', filename='jquery.js') }}">\x3C/script>')</script>
+</head>
+    <body>
+      <div class = "center">
+          <img src="{{ url_for('static', filename='Profile_Black-2D_Floor_Plan.jpg') }}" alt="House" data-image-width="800" data-image-height="600">
+          <div class= "room-info" style="left: 925px; top: 150px">
+              <img id = "kitchenlightimg" onclick="toggleLight('kitchen')" class="small-img"
+                   src="{% if kitchen['light'] %}
+                   {{ url_for('static', filename='light-bulb-on.png') }}
+                   {% else %}
+                   {{ url_for('static', filename='light-bulb.png') }}
+                   {% endif %}" />
+              <span id = "kitchenTemp">Temp: <span id = "kitchentempvalue">{{ kitchen['temp'] }}</span></span>
+              <span id = "kitchenBrightness">Brightness: {{ kitchen['brightness'] }}</span>
+          </div>
+
+
+          <div class= "room-info" style="left: 1125px; top: 90px">
+              <img id = "bathroomlightimg" onclick="toggleLight('bathroom')" class="small-img"
+                   src="{% if bathroom['light'] %}
+                   {{ url_for('static', filename='light-bulb-on.png') }}
+                   {% else %}
+                   {{ url_for('static', filename='light-bulb.png') }}
+                   {% endif %}" />
+
+          <span class = "temp" id = "bathroomTemp">Temp: {{ bathroom['temp'] }}</span>
+          <span id = "bathroomBrightness">Brightness: {{ bathroom['brightness'] }}</span>
+          </div>
+          <div class= "room-info" style="left: 1250px; top: 225px">
+              <img id = "hallwaylightimg" onclick="toggleLight('hallway')" class="small-img"
+              src="{% if hallway['light'] %}
+              {{ url_for('static', filename='light-bulb-on.png') }}
+              {% else %}
+              {{ url_for('static', filename='light-bulb.png') }}
+              {% endif %}" />
+          <span class = "temp" id = "hallwayTemp">Temp: {{ hallway['temp'] }}</span>
+          <span id = "hallwayBrightness">Brightness: {{ hallway['brightness'] }}</span>
+          </div>
+          <div class= "room-info" style="left: 1200px; top: 400px">
+              <img id = "bedroomlightimg" onclick="toggleLight('bedroom')" class="small-img"
+              src="{% if bedroom['light'] %}
+              {{ url_for('static', filename='light-bulb-on.png') }}
+              {% else %}
+              {{ url_for('static', filename='light-bulb.png') }}
+              {% endif %}" />
+          <span class = "temp" id = "bedroomTemp">Temp: {{ bedroom['temp'] }}</span>
+          <span id = "bedroomBrightness">Brightness: {{ bedroom['brightness'] }}</span>
+          </div>
+          <div class= "room-info" style="left: 600px; top: 300px">
+              <img id = "balconylightimg" onclick="toggleLight('balcony')" class="small-img"
+              src="{% if balcony['light'] %}
+              {{ url_for('static', filename='light-bulb-on.png') }}
+              {% else %}
+              {{ url_for('static', filename='light-bulb.png') }}
+              {% endif %}" />
+          <span class = "temp" id = "balconyTemp">Temp: {{ balcony['temp'] }}</span>
+          <span id = "balconyBrightness">Brightness: {{ balcony['brightness'] }}</span>
+          </div>
+
+      </div>
+    <div class="forms">
+        <div class="form">
+            <span>
+                <label>Kitchen brightness</label>
+                <input type="number" id="kitchenbrightnessfield"/>
+            </span>
+            <span>
+                <button onclick="changeBrightness('kitchen')">Change brightness</button>
+            </span>
+        </div>
+        <div class="form">
+            <span>
+                <label>Bathroom brightness</label>
+                <input type="number" id="bathroombrightnessfield"/>
+            </span>
+            <span>
+                <button onclick="changeBrightness('bathroom')">Change brightness</button>
+            </span>
+        </div>
+        <div class="form">
+            <span>
+                <label>Hallway brightness</label>
+                <input type="number" id="hallwaybrightnessfield"/>
+            </span>
+            <span>
+                <button onclick="changeBrightness('hallway')">Change brightness</button>
+            </span>
+        </div>
+                <div class="form">
+            <span>
+                <label>Bedroom brightness</label>
+                <input type="number" id="bedroombrightnessfield"/>
+            </span>
+            <span>
+                <button onclick="changeBrightness('bedroom')">Change brightness</button>
+            </span>
+        </div>
+        <div class="form">
+            <span>
+                <label>Balcony brightness</label>
+                <input type="number" id="balconybrightnessfield"/>
+            </span>
+            <span>
+                <button onclick="changeBrightness('balcony')">Change brightness</button>
+            </span>
+        </div>
+
+        <div class="form">
+            <span>
+                <label>Temp Thresholds</label>
+                <label id="onlabel" for="onvaluefield">MIN: </label><input type="number" id="onvaluefield"/>
+                <label id="offlabel" for="offvaluefield">MAX: </label><input type="number" id="offvaluefield"/>
+            </span>
+            <span>
+                <label id = "statusLabel">Label is:</label>
+            </span>
+            <span>
+                <button onclick="changeTempThresholds()">Change thresholds</button>
+            </span>
+        </div>
+
+    </div>
+      <div style="width: 75%; margin: auto;">
+        <canvas id="myChart"></canvas>
+    </div>
+    <script>
+  const ctx = document.getElementById('myChart');
+
+  const myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Температура на кухні',
+            data: [],
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            fill: false,
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            x: {
+                display: true,
+                title: {
+                    display: true,
+                    text: 'X'
+                }
+            },
+            y: {
+                display: true,
+                title: {
+                    display: true,
+                    text: 'Y'
+                }
+            }
+        }
+    }
+});
+</script>
+    <script>setInterval(toggleTemp, 2500);</script>
+</body>
+</html>

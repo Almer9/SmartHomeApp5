@@ -1,0 +1,35 @@
+.center{
+    width: fit-content;
+    margin: auto;
+}
+.room-info{
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+
+}
+.room-info * {
+    width: 100%;
+}
+
+.small-img{
+    width: 40px;
+}
+span{
+    font-size: 20px;
+    font-family: "Times New Roman", serif;
+}
+.forms{
+    display: flex;
+    gap: 20px;
+}
+.form{
+    border: solid 1px black;
+    display: flex;
+    flex-direction: column;
+}
+.form span{
+    margin: 5px;
+    display: flex;
+    flex-direction: column;
+}
