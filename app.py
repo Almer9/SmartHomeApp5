@@ -3,6 +3,7 @@ from flask import Flask, request, render_template, jsonify
 import random
 from flask_mysqldb import MySQL
 import time
+
 home_data = {'kitchen': {'light': False, 'temp': 20.0, 'brightness': 0, 'heating': True},
              'bathroom': {'light': False, 'temp': 20.4, 'brightness': 0},
              'hallway': {'light': False, 'temp': 19.3, 'brightness': 0},
@@ -59,8 +60,11 @@ def proceed(room, device, action):
             result1 = cursor.fetchone()
             cursor.execute("SELECT OFF_TEMP FROM heat_configuration WHERE id = 0")
             result2 = cursor.fetchone()
+            cursor.execute("SELECT STATUS FROM heat_configuration WHERE id = 0")
+            result3 = cursor.fetchone()
             data = {'on_temp': result1[0],
                     'off_temp': result2[0],
+                    'systemstatus': result3[0],
                     'heating': home_data['kitchen']['heating'],
                     'temp': home_data['kitchen']['temp']}
             cursor.close()
@@ -97,6 +101,34 @@ def proceed(room, device, action):
             cursor.close()
             return jsonify({'temp': temp})
 
+        if device == 'temp' and action == 'onoff':
+            cursor = mysql.connection.cursor()
+            cursor.execute("SELECT STATUS FROM heat_configuration WHERE id = 0")
+            result = cursor.fetchone()
+            print(result[0])
+            param = 1
+            if result[0] == 1:
+                param = 0
+            mysql.connection.commit()
+            cursor.close()
+            cursor = mysql.connection.cursor()
+            cursor.execute("UPDATE heat_configuration SET STATUS = %s WHERE ID = 0", (param,))
+
+            cursor.execute("SELECT STATUS FROM heat_configuration WHERE id = 0")
+            result = cursor.fetchone()
+
+            print(result)
+            mysql.connection.commit()
+            cursor.close()
+            return jsonify({'systemstatus': result[0]})
+
+        if device == 'temp' and action == 'getonoff':
+            cursor = mysql.connection.cursor()
+            cursor.execute("SELECT STATUS FROM heat_configuration WHERE id = 0")
+            result = cursor.fetchone()
+            cursor.close()
+            return jsonify({'systemstatus': result[0]})
+
         if device == 'temp' and action == 'update':
             cursor = mysql.connection.cursor()
             if request.form.get('heating') == 'true':
@@ -108,7 +140,8 @@ def proceed(room, device, action):
             now = datetime.now()
             cursor.execute("UPDATE heat_configuration SET TEMP = %s WHERE ID = 0", (home_data['kitchen']['temp'],))
             cursor.execute("INSERT INTO logs VALUES (NULL, %s, %s, %s, %s)", (now.strftime('%Y-%m-%d %H:%M:%S'),
-                                                                              home_data['kitchen']['temp'],"Kitchen","Web"))
+                                                                              home_data['kitchen']['temp'], "Kitchen",
+                                                                              "Web"))
             mysql.connection.commit()
             cursor.close()
             return jsonify({'temp': home_data['kitchen']['temp'], 'heating': home_data['kitchen']['heating']})

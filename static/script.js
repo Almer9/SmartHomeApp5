@@ -49,50 +49,67 @@ async function getHeating(onSuccess) {
 
 }
 
+async function getOnoff(onSuccess) {
+
+    const response = await fetch('/kitchen/temp/getonoff');
+    if (response.ok) {
+        onSuccess(await response.json())
+    }
+
+}
+
 
 async function toggleTemp() {
     getTempThresholds();
 
     let tempelem = document.getElementById("kitchentempvalue")
     let heating = true
-    let statusLabel = document.getElementById("statusLabel")
+    let heatingStatusLabel = document.getElementById("heatingStatusLabel")
+    let systemStatusLabel = document.getElementById("systemStatusLabel")
+    let systemStatus
+
     await getHeating(function (response) {
+        if (response.systemstatus) {
+            systemStatusLabel.innerText = "System is on"
+        } else {
+            systemStatusLabel.innerText = "System is off"
+        }
+        systemStatus = response.systemstatus
+
         if (!response.heating && response.temp >= response.on_temp && response.temp <= response.off_temp || response.temp >= response.off_temp) {
             heating = false
-            statusLabel.innerText = "Heating system is off"
-        }
-        else {
-            statusLabel.innerText = "Heating system is on"
+            heatingStatusLabel.innerText = "Heating system is off"
+        } else {
+            heatingStatusLabel.innerText = "Heating system is on"
         }
     })
+    console.log(systemStatus)
+    if (systemStatus === 1) {
 
-    let data = {'temp': tempelem.innerText, 'heating': heating}
-    $.ajax({
-        url: '/none/temp/update',
-        type: 'POST',
-        data: data,
-        success: function (response) {
-            tempelem.innerText = response.temp
-            const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            const seconds = now.getSeconds();
-            const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            addData(formattedTime, response.temp)
-        }
-    });
-    $.ajax({
-        url: '/none/temp/update',
-        type: 'GET',
-        success: function (response) {
-            var elements = document.querySelectorAll('.temp');
-            elements.forEach(function (element) {
-                element.innerText = `Temp: ${response[element.id].toFixed(2)}`
-            });
-        }
-    });
+        let data = {'temp': tempelem.innerText, 'heating': heating}
+        $.ajax({
+            url: '/none/temp/update',
+            type: 'POST',
+            data: data,
+            success: function (response) {
+                tempelem.innerText = response.temp
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                addData(formattedTime, response.temp)
+            }
+        });
 
+        $.ajax({
+            url: '/none/temp/update',
+            type: 'GET',
+            success: function (response) {
 
+            }
+        });
+    }
 }
 
 function getTempThresholds() {
@@ -148,6 +165,26 @@ function changeTempThresholds() {
         });
     }
 }
+
+function onOff(){
+    let systemStatusLabel = document.getElementById("systemStatusLabel")
+    $.ajax({
+            url: '/kitchen/temp/onoff',
+            type: 'POST',
+            success: function (response) {
+                if (response.systemstatus){
+                    systemStatusLabel.innerText = "System is on"
+                }
+                else {
+                    systemStatusLabel.innerText = "System is off"
+                }
+
+            }
+        });
+
+}
+
+
 function addData(time, temp) {
     console.log(myChart)
     console.log(time)

@@ -11,6 +11,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from conf import DELAY
 def get_info():
 
+    query = "SELECT STATUS FROM heat_configuration WHERE id = 0"
+    result = execute_query(query)
+    on_off_button.config(text="Status: " + str(result[0][0]))
+
     query = "SELECT ON_TEMP FROM heat_configuration WHERE id = 0"
     result = execute_query(query)
     low_temp_label.config(text="Low Temp:" + str(result[0][0]))
@@ -21,7 +25,6 @@ def get_info():
 
     query = "SELECT TEMP FROM heat_configuration WHERE id = 0"
     result = execute_query(query)
-
 
     print(result[0][0])
     if result:
@@ -55,7 +58,10 @@ def change_thresholds():
         high_temp_label.config(text="High Temp:" + str(high_temp_entry.get()))
         high_temp_entry.delete(0, END)
 
-
+def on_off():
+    query = "SELECT STATUS FROM heat_configuration WHERE id = 0"
+    result = execute_query(query)
+    execute_query("UPDATE heat_configuration SET STATUS = %s WHERE ID = 0", params=(not result[0][0],))
         
 if __name__ == '__main__':
     thread = Thread(target=app.start_flask)
@@ -74,6 +80,9 @@ if __name__ == '__main__':
     high_temp_entry = Entry(window)
     high_temp_entry.grid(row=1, column=2, padx=5, pady=5)
 
+    on_off_button = Button(window, text="On/Off", command=on_off)
+    on_off_button.grid(row=1, column=1, padx=5, pady=5)
+
     change_button = Button(window, text="Change thresholds", command=change_thresholds)
     change_button.grid(row=2, column=1, padx=5, pady=5)
 
@@ -89,6 +98,5 @@ if __name__ == '__main__':
     timestamps = []
     temperatures = []
     graph = ax.plot(timestamps, temperatures)[0]
-
     window.after(DELAY, get_info)
     window.mainloop()
